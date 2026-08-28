@@ -147,6 +147,30 @@
     return turns;
   }
 
+  // Some transcription tools bundle several quick, short answers spoken in
+  // rapid succession (e.g. a run of "True"/"False" judgments with barely
+  // any pause between them) into a single long cue instead of one cue per
+  // word. Runs after mergeTurns: any turn whose *entire* text is just a
+  // whitespace-separated run of the given tokens (2 or more) gets split
+  // into one turn per token, with its time span divided evenly. A turn
+  // that doesn't match is left untouched. No tokens configured = no-op.
+  function splitAnswerTurns(turns, tokens) {
+    const tokenSet = new Set(tokens.map((t) => t.trim().toLowerCase()).filter(Boolean));
+    if (!tokenSet.size) return turns;
+    const out = [];
+    for (const t of turns) {
+      const words = t.text.trim().split(/\s+/).filter(Boolean);
+      const normWords = words.map((w) => w.replace(/^[^\w]+|[^\w]+$/g, '').toLowerCase());
+      const allMatch = words.length >= 2 && normWords.every((w) => tokenSet.has(w));
+      if (!allMatch) { out.push(t); continue; }
+      const span = (t.end - t.start) / words.length;
+      words.forEach((w, i) => {
+        out.push({ speaker: t.speaker, start: t.start + i * span, end: t.start + (i + 1) * span, text: w });
+      });
+    }
+    return out;
+  }
+
   function computeSpeakerStats(turns) {
     const bySpeaker = {};
     for (const t of turns) {
@@ -510,7 +534,9 @@ Sam: Sounds good, talk then.
   // ---------- Shared tail: merge cues into turns, compute metrics, render ----------
   function finishAnalyze(entries) {
     const mergeGapMs = Math.max(0, parseInt($('#mergeGap').value, 10) || 0);
-    const turns = mergeTurns(entries, mergeGapMs);
+    let turns = mergeTurns(entries, mergeGapMs);
+    const splitTokens = ($('#splitTokens').value || '').split(',').map((s) => s.trim()).filter(Boolean);
+    turns = splitAnswerTurns(turns, splitTokens);
     if (turns.length < 2) { showError('Found fewer than two turns — need at least two to analyze timing.'); return; }
 
     const { transitions, selfPauses } = computeTransitions(turns);

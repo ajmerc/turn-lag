@@ -63,6 +63,8 @@ Three example files are in [`sample-data/`](sample-data) — one per format — 
 
 Cues from the same speaker within a configurable window (300ms by default) get merged into a single turn before anything is computed — this keeps a transcript that logs every individual utterance from being counted as dozens of tiny turns.
 
+Some transcription and diarization tools do the opposite in one specific case: a run of short, rapid-fire answers (e.g. a series of "True"/"False" judgments given back-to-back with barely a pause) gets bundled into a single long cue instead of one per answer. If that's showing up in your transcript, list those words in **"Split a turn that's just a run of these words back into one turn each"** (e.g. `true, false`) — any turn whose *entire* text is nothing but those words, in any order, gets split evenly back into one turn per word. Turns with other content mixed in are left alone.
+
 ### Two separate speaker tracks
 
 If you've got two separate recordings of the same call — one per person, as you'd get from two local recordings, or two separately-transcribed audio tracks — use the **Two speaker tracks** tab instead of combining them yourself. Upload one file per speaker, give each a name, and Turn Lag merges them into a single timeline and runs the same analysis on the combined result. Any speaker tags already inside those files are ignored; every cue in a track file is stamped with the name you gave that track, so a plain, untagged transcript works fine as a track file.
