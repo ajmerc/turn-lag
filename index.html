@@ -306,9 +306,15 @@
     font-family: "IBM Plex Mono", monospace; font-size: 12px;
     padding: 6px 10px; border-radius: 6px; box-shadow: var(--shadow);
     opacity: 0; transform: translate(-50%, -100%); transition: opacity 0.08s ease;
-    white-space: nowrap;
+    max-width: 280px;
   }
   .tooltip.show { opacity: 1; }
+  .tooltip-head { white-space: nowrap; }
+  .tooltip-text {
+    white-space: normal; word-wrap: break-word; font-style: italic; opacity: 0.85;
+    line-height: 1.4; margin-top: 4px; padding-top: 4px;
+    border-top: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  }
 
   svg text { font-family: "IBM Plex Mono", monospace; fill: var(--ink-muted); }
   .axis-line { stroke: var(--baseline); stroke-width: 1; }

@@ -378,14 +378,32 @@ Sam: Sounds good, talk then.
   }
 
   // ---------- Tooltip ----------
+  // Built from plain text via textContent (not innerHTML) so speaker names and
+  // spoken transcript text can safely contain quotes, &, <, > etc. without any
+  // escaping/unescaping mismatch.
   const tooltipEl = $('#tooltip');
-  function showTooltip(x, y, html) {
-    tooltipEl.innerHTML = html;
+  function showTooltip(x, y, headText, bodyText) {
+    tooltipEl.textContent = '';
+    const head = document.createElement('div');
+    head.className = 'tooltip-head';
+    head.textContent = headText || '';
+    tooltipEl.appendChild(head);
+    if (bodyText) {
+      const body = document.createElement('div');
+      body.className = 'tooltip-text';
+      body.textContent = `“${bodyText}”`;
+      tooltipEl.appendChild(body);
+    }
     tooltipEl.style.left = x + 'px';
     tooltipEl.style.top = (y - 10) + 'px';
     tooltipEl.classList.add('show');
   }
   function hideTooltip() { tooltipEl.classList.remove('show'); }
+  function truncateText(s, max) {
+    s = (s || '').trim();
+    if (s.length <= max) return s;
+    return s.slice(0, max - 1).trimEnd() + '…';
+  }
 
   // ---------- Tabs ----------
   $$('.tab-btn').forEach((btn) => {
@@ -637,8 +655,9 @@ Sam: Sounds good, talk then.
       const bw = Math.max(3, x(t.end) - x(t.start));
       const by = laneY(li) + (laneH - 24) / 2;
       const dur = t.end - t.start;
-      const tip = `${escapeHtml(t.speaker)} · ${msToClock(t.start)}–${msToClock(t.end)} (${Math.round(dur)}ms)`;
-      bars += `<rect class="turn-bar" data-tip="${escAttr(tip)}" x="${bx}" y="${by}" width="${bw}" height="24" rx="4" fill="${colorMap[t.speaker]}" />`;
+      const tip = `${t.speaker} · ${msToClock(t.start)}–${msToClock(t.end)} (${Math.round(dur)}ms)`;
+      const spoken = truncateText(t.text, 240);
+      bars += `<rect class="turn-bar" data-tip-head="${escAttr(tip)}" data-tip-text="${escAttr(spoken)}" x="${bx}" y="${by}" width="${bw}" height="24" rx="4" fill="${colorMap[t.speaker]}" />`;
     });
 
     for (let i = 1; i < turns.length; i++) {
@@ -652,12 +671,12 @@ Sam: Sounds good, talk then.
         const yTop = Math.min(laneY(li1), laneY(li2));
         const yBot = Math.max(laneY(li1), laneY(li2)) + laneH;
         const tip = `overlap · ${Math.round(-gap)}ms`;
-        connectors += `<rect class="gap-mark" data-tip="${escAttr(tip)}" x="${xa}" y="${yTop}" width="${Math.max(1, xb - xa)}" height="${yBot - yTop}" fill="var(--diverge-overlap)" opacity="0.16" />`;
+        connectors += `<rect class="gap-mark" data-tip-head="${escAttr(tip)}" x="${xa}" y="${yTop}" width="${Math.max(1, xb - xa)}" height="${yBot - yTop}" fill="var(--diverge-overlap)" opacity="0.16" />`;
       } else {
         const xa = x(prev.end), xb = x(cur.start);
         const tip = `pause · ${Math.round(gap)}ms`;
-        connectors += `<line class="gap-mark" data-tip="${escAttr(tip)}" x1="${xa}" y1="${(yA + yB) / 2}" x2="${xb}" y2="${(yA + yB) / 2}" stroke="var(--diverge-pause)" stroke-width="2" stroke-dasharray="1,4" stroke-linecap="round" />`;
-        connectors += `<circle class="gap-mark" data-tip="${escAttr(tip)}" cx="${xb}" cy="${(yA + yB) / 2}" r="5" fill="none" stroke="var(--diverge-pause)" stroke-width="1.5" />`;
+        connectors += `<line class="gap-mark" data-tip-head="${escAttr(tip)}" x1="${xa}" y1="${(yA + yB) / 2}" x2="${xb}" y2="${(yA + yB) / 2}" stroke="var(--diverge-pause)" stroke-width="2" stroke-dasharray="1,4" stroke-linecap="round" />`;
+        connectors += `<circle class="gap-mark" data-tip-head="${escAttr(tip)}" cx="${xb}" cy="${(yA + yB) / 2}" r="5" fill="none" stroke="var(--diverge-pause)" stroke-width="1.5" />`;
       }
     }
 
@@ -687,7 +706,7 @@ Sam: Sounds good, talk then.
 
   function attachTooltips(root, selector) {
     $$(selector, root).forEach((el) => {
-      el.addEventListener('mousemove', (e) => showTooltip(e.clientX, e.clientY, el.dataset.tip));
+      el.addEventListener('mousemove', (e) => showTooltip(e.clientX, e.clientY, el.dataset.tipHead, el.dataset.tipText));
       el.addEventListener('mouseleave', hideTooltip);
     });
   }
@@ -712,7 +731,7 @@ Sam: Sounds good, talk then.
       const opacity = (0.45 + 0.55 * magnitude).toFixed(2);
       const color = isNeg ? 'var(--diverge-overlap)' : 'var(--diverge-pause)';
       const tip = `${b.label}${i < bins.length - 1 ? '–' + bins[i + 1].label : ''} ms · ${b.count} transition${b.count === 1 ? '' : 's'}`;
-      bars += `<rect class="hist-bar" data-tip="${escAttr(tip)}" x="${bx}" y="${by}" width="${Math.max(1, barW)}" height="${Math.max(0, bh)}" rx="3" fill="${color}" opacity="${b.count ? opacity : 0.12}" />`;
+      bars += `<rect class="hist-bar" data-tip-head="${escAttr(tip)}" x="${bx}" y="${by}" width="${Math.max(1, barW)}" height="${Math.max(0, bh)}" rx="3" fill="${color}" opacity="${b.count ? opacity : 0.12}" />`;
       if (b.count > 0) bars += `<text x="${bx + barW / 2}" y="${by - 4}" font-size="10" text-anchor="middle">${b.count}</text>`;
       ticks += `<text x="${bx}" y="${h - padB + 13}" font-size="8.5" text-anchor="middle" transform="rotate(0 ${bx} ${h - padB + 13})">${b.label}</text>`;
     });
