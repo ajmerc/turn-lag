@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turn Lag</title>
+<meta name="description" content="Paste a conversation transcript and see the timing of turn-taking: pauses, overlaps, and what simulated call delay does to the rhythm.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='7' width='16' height='7' rx='3' fill='%232a78d6'/%3E%3Crect x='13' y='18' width='16' height='7' rx='3' fill='%23eb6834'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --page:        #f9f9f7;
+    --surface:     #fcfcfb;
+    --surface-2:   #f3f2ee;
+    --ink:         #0b0b0b;
+    --ink-2:       #52514e;
+    --ink-muted:   #898781;
+    --gridline:    #e1e0d9;
+    --baseline:    #c3c2b7;
+    --border:      rgba(11,11,11,0.10);
+    --border-2:    rgba(11,11,11,0.16);
+    --accent:      #4a3aa7;
+    --accent-ink:  #ffffff;
+    --accent-soft: rgba(74,58,167,0.10);
+    --speaker-1:   #2a78d6;
+    --speaker-2:   #eb6834;
+    --speaker-3:   #1baf7a;
+    --speaker-4:   #eda100;
+    --speaker-5:   #e87ba4;
+    --speaker-6:   #008300;
+    --speaker-7:   #4a3aa7;
+    --speaker-8:   #e34948;
+    --diverge-pause:   #2a78d6;
+    --diverge-overlap: #e34948;
+    --diverge-mid:     #f0efec;
+    --good:     #0ca30c;
+    --warning:  #b3790f;
+    --critical: #d03b3b;
+    --shadow: 0 1px 2px rgba(11,11,11,0.05), 0 8px 24px -12px rgba(11,11,11,0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page:        #0d0d0d;
+      --surface:     #1a1a19;
+      --surface-2:   #222221;
+      --ink:         #ffffff;
+      --ink-2:       #c3c2b7;
+      --ink-muted:   #898781;
+      --gridline:    #2c2c2a;
+      --baseline:    #383835;
+      --border:      rgba(255,255,255,0.10);
+      --border-2:    rgba(255,255,255,0.16);
+      --accent:      #9085e9;
+      --accent-ink:  #14121f;
+      --accent-soft: rgba(144,133,233,0.14);
+      --speaker-1:   #3987e5;
+      --speaker-2:   #d95926;
+      --speaker-3:   #199e70;
+      --speaker-4:   #c98500;
+      --speaker-5:   #d55181;
+      --speaker-6:   #008300;
+      --speaker-7:   #9085e9;
+      --speaker-8:   #e66767;
+      --diverge-pause:   #3987e5;
+      --diverge-overlap: #e66767;
+      --diverge-mid:     #383835;
+      --good:     #0ca30c;
+      --warning:  #fab219;
+      --critical: #e66767;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page:        #0d0d0d;
+    --surface:     #1a1a19;
+    --surface-2:   #222221;
+    --ink:         #ffffff;
+    --ink-2:       #c3c2b7;
+    --ink-muted:   #898781;
+    --gridline:    #2c2c2a;
+    --baseline:    #383835;
+    --border:      rgba(255,255,255,0.10);
+    --border-2:    rgba(255,255,255,0.16);
+    --accent:      #9085e9;
+    --accent-ink:  #14121f;
+    --accent-soft: rgba(144,133,233,0.14);
+    --speaker-1:   #3987e5;
+    --speaker-2:   #d95926;
+    --speaker-3:   #199e70;
+    --speaker-4:   #c98500;
+    --speaker-5:   #d55181;
+    --speaker-6:   #008300;
+    --speaker-7:   #9085e9;
+    --speaker-8:   #e66767;
+    --diverge-pause:   #3987e5;
+    --diverge-overlap: #e66767;
+    --diverge-mid:     #383835;
+    --good:     #0ca30c;
+    --warning:  #fab219;
+    --critical: #e66767;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  a { color: var(--accent); }
+
+  .app {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* ---------- Header ---------- */
+  .hero { display: flex; flex-direction: column; gap: 10px; padding-bottom: 4px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  h1 {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 40px);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--ink-2);
+    font-size: 16px;
+    max-width: 62ch;
+    margin: 0;
+  }
+  .subtitle .footnote { color: var(--ink-muted); font-size: 14px; display: block; margin-top: 6px; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+  .card-pad { padding: 22px 24px; }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .card-title { font-weight: 600; font-size: 15px; margin: 0; }
+  .card-desc { color: var(--ink-muted); font-size: 13px; margin: 2px 0 0; }
+
+  /* ---------- Input panel ---------- */
+  .input-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .input-grid { grid-template-columns: 1fr; } }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .tab-btn {
+    font: inherit; font-family: "IBM Plex Sans", sans-serif; font-weight: 500; font-size: 13.5px;
+    background: none; border: none; color: var(--ink-muted); padding: 9px 4px 11px;
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .tab-btn[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; flex-direction: column; gap: 12px; }
+  .tab-panel.active { display: flex; }
+
+  textarea, select, input[type="text"], input[type="number"] {
+    font: inherit; font-family: "IBM Plex Mono", monospace; font-size: 13px;
+    background: var(--surface-2); color: var(--ink);
+    border: 1px solid var(--border-2); border-radius: 8px; padding: 10px 12px;
+    resize: vertical;
+  }
+  textarea:focus, select:focus, input:focus, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  #pasteArea { min-height: 160px; width: 100%; }
+  .file-drop {
+    border: 1.5px dashed var(--border-2); border-radius: 8px; padding: 22px;
+    text-align: center; color: var(--ink-muted); font-size: 13.5px; cursor: pointer;
+    background: var(--surface-2);
+  }
+  .file-drop:hover { border-color: var(--accent); color: var(--ink-2); }
+  .file-drop input { display: none; }
+  .field-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .field-row label { font-size: 12.5px; color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
+
+  button.btn {
+    font: inherit; font-family: "IBM Plex Sans", sans-serif; font-weight: 600; font-size: 13.5px;
+    padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-2);
+    background: var(--surface-2); color: var(--ink); cursor: pointer;
+  }
+  button.btn:hover { border-color: var(--border-2); background: var(--gridline); }
+  button.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  button.btn-primary:hover { filter: brightness(1.06); }
+  button.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+  button.btn-ghost { background: none; border-color: transparent; color: var(--accent); padding: 10px 6px; }
+
+  .guide { font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 12px; }
+  .guide h3 { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); margin: 0 0 6px; font-weight: 600; }
+  .guide pre {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px 12px; font-size: 11.5px; overflow-x: auto; margin: 0; line-height: 1.6;
+  }
+  .error-box {
+    display: none; background: rgba(208,59,59,0.08); border: 1px solid rgba(208,59,59,0.35);
+    color: var(--critical); border-radius: 8px; padding: 10px 14px; font-size: 13px;
+  }
+  .error-box.show { display: block; }
+
+  /* ---------- Results ---------- */
+  #results { display: none; flex-direction: column; gap: 22px; }
+  #results.show { display: flex; }
+  .results-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .results-head h2 { font-family: "IBM Plex Mono", monospace; font-size: 18px; margin: 0; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .stat-tile { background: var(--surface); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); }
+  .stat-value { font-family: "IBM Plex Mono", monospace; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat-sub { font-size: 12px; color: var(--ink-2); }
+
+  .speaker-list { display: flex; flex-direction: column; gap: 10px; }
+  .speaker-row { display: grid; grid-template-columns: 130px 1fr 90px; gap: 12px; align-items: center; font-size: 13px; }
+  .speaker-name { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .bar-track { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .speaker-meta { color: var(--ink-muted); text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; }
+
+  .timeline-flex { display: flex; gap: 0; align-items: flex-start; }
+  .timeline-labels { flex: none; width: 132px; padding-top: 10px; }
+  .timeline-label-row { height: 44px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); border-bottom: 1px dashed transparent; }
+  .timeline-label-row .swatch { width: 10px; height: 10px; }
+  .timeline-scroll { flex: 1 1 auto; overflow-x: auto; border-radius: 8px; }
+  .timeline-scroll svg { display: block; }
+  .legend-row { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin-top: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-line { width: 14px; height: 0; border-top: 2px dashed var(--diverge-pause); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--gridline); white-space: nowrap; }
+  th { color: var(--ink-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--surface); }
+  th:hover { color: var(--ink); }
+  td.mono, th { font-family: "IBM Plex Mono", monospace; }
+  td.text-cell { white-space: normal; font-family: "IBM Plex Sans", sans-serif; color: var(--ink-2); max-width: 320px; }
+  .table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .table-wrap table { min-width: 620px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; font-family: "IBM Plex Sans", sans-serif; }
+  .chip-overlap { background: rgba(208,59,59,0.12); color: var(--critical); }
+  .chip-pause { background: rgba(179,121,15,0.12); color: var(--warning); }
+  .chip-normal { color: var(--ink-muted); }
+
+  .sim-controls { display: flex; flex-direction: column; gap: 14px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .sim-readout { display: flex; justify-content: space-between; font-size: 13px; }
+  .sim-readout .val { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+  .delta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .delta-tile { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .delta-tile .stat-label { font-size: 10.5px; }
+  .delta-val { font-family: "IBM Plex Mono", monospace; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .delta-val.up { color: var(--critical); }
+  .delta-val.down { color: var(--good); }
+  .sim-note { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+
+  footer { text-align: center; color: var(--ink-muted); font-size: 12.5px; padding-top: 12px; }
+  footer a { color: var(--ink-2); }
+
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 50;
+    background: var(--ink); color: var(--page);
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    padding: 6px 10px; border-radius: 6px; box-shadow: var(--shadow);
+    opacity: 0; transform: translate(-50%, -100%); transition: opacity 0.08s ease;
+    white-space: nowrap;
+  }
+  .tooltip.show { opacity: 1; }
+
+  svg text { font-family: "IBM Plex Mono", monospace; fill: var(--ink-muted); }
+  .axis-line { stroke: var(--baseline); stroke-width: 1; }
+  .grid-line { stroke: var(--gridline); stroke-width: 1; }
+</style>
+</head>
+<body>
+<div class="tooltip" id="tooltip"></div>
+
+<div class="app">
+
+  <header class="hero">
+    <div class="eyebrow">turn-taking instrument</div>
+    <h1>Turn Lag</h1>
+    <p class="subtitle">
+      Paste a conversation transcript and see the rhythm underneath it: who talks when, how long the gaps between turns run, and where turns overlap. Then simulate call delay on one speaker and watch the same conversation's timing statistics shift.
+      <span class="footnote">Built on floor-transfer-offset (FTO) methodology from conversation-timing research &mdash; the same measure used to study how audio/video-call latency distorts turn-taking. Runs entirely in your browser; nothing you paste is uploaded anywhere.</span>
+    </p>
+  </header>
+
+  <section class="card card-pad" id="inputPanel">
+    <div class="input-grid">
+      <div>
+        <div class="tabs" role="tablist">
+          <button class="tab-btn" role="tab" aria-selected="true" data-tab="paste">Paste transcript</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-tab="upload">Upload file</button>
+        </div>
+
+        <div class="tab-panel active" data-panel="paste">
+          <textarea id="pasteArea" placeholder="Paste a WebVTT transcript (e.g. exported from Zoom) or CSV with speaker,start,end,text columns&#10;&#10;WEBVTT&#10;&#10;1&#10;00:00:00.000 --> 00:00:02.500&#10;Alice: Hey, how's it going?"></textarea>
+          <div class="field-row">
+            <button class="btn btn-primary" id="analyzeBtn">Analyze transcript</button>
+            <button class="btn btn-ghost" id="loadSampleBtn">Load sample conversation</button>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-panel="upload">
+          <label class="file-drop" for="fileInput">
+            <div><strong>Click to choose a file</strong> &mdash; .vtt or .csv</div>
+            <input type="file" id="fileInput" accept=".vtt,.csv,.txt">
+          </label>
+          <div class="field-row" id="fileStatus" style="color: var(--ink-muted); font-size: 13px;"></div>
+        </div>
+
+        <div class="field-row" style="margin-top: 14px;">
+          <label for="mergeGap">Merge same-speaker cues within
+            <input type="number" id="mergeGap" value="300" min="0" max="3000" step="50" style="width: 70px;"> ms into one turn
+          </label>
+        </div>
+        <div class="error-box" id="errorBox"></div>
+      </div>
+
+      <div class="guide">
+        <div>
+          <h3>WebVTT format</h3>
+          <p>Standard export from Zoom, Otter, or most caption tools. Speaker can be tagged as <code>&lt;v Name&gt;</code> or written as <code>Name: text</code> at the start of the cue.</p>
+          <pre class="mono">WEBVTT
+
+1
+00:00:00.000 --&gt; 00:00:02.500
+Alice: Hey, how's it going?
+
+2
+00:00:02.300 --&gt; 00:00:04.100
+Bob: Pretty good, you?</pre>
+        </div>
+        <div>
+          <h3>CSV format</h3>
+          <p>Columns <code>speaker, start, end, text</code> (text optional). Times can be seconds or <code>mm:ss</code> / <code>hh:mm:ss.mmm</code>.</p>
+          <pre class="mono">speaker,start,end,text
+Alice,0:00,0:02.5,"Hey, how's it going?"
+Bob,0:02.3,0:04.1,Pretty good</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results">
+    <div class="results-head">
+      <h2 id="resultsTitle">Analysis</h2>
+      <button class="btn" id="resetBtn">Load a different transcript</button>
+    </div>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="card card-pad">
+      <div class="card-head">
+        <div>
+          <p class="card-title">Speakers</p>
+          <p class="card-desc">Share of total talk time</p>
+        </div>
+      </div>
+      <div class="speaker-list" id="speakerList"></div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="card-head">
+        <div>
+          <p class="card-title">Timeline</p>
+          <p class="card-desc">Each bar is one turn. Overlapping bars across lanes are simultaneous speech; dashed connectors mark the gap before a turn starts.</p>
+        </div>
+      </div>
+      <div id="timelineWrap"></div>
+      <div class="legend-row" id="timelineLegend"></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card card-pad">
+        <div class="card-head">
+          <div>
+            <p class="card-title">Turn-transition timing</p>
+            <p class="card-desc">Gap between a turn's start and the end of the one before it, at every speaker switch</p>
+          </div>
+        </div>
+        <div id="histWrap"></div>
+        <div class="legend-row">
+          <div class="legend-item"><span class="legend-swatch" style="background: var(--diverge-overlap);"></span>overlap (started before prior turn ended)</div>
+          <div class="legend-item"><span class="legend-swatch" style="background: var(--diverge-pause);"></span>pause (started after)</div>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div class="card-head">
+          <div>
+            <p class="card-title">Delay simulator</p>
+            <p class="card-desc">Model added call latency on one speaker</p>
+          </div>
+        </div>
+        <div class="sim-controls">
+          <div class="field-row">
+            <label for="simSpeaker" style="font-size: 13px;">Delay this speaker's outgoing audio:</label>
+            <select id="simSpeaker"></select>
+          </div>
+          <div>
+            <div class="sim-readout"><span>Simulated delay</span><span class="val mono" id="simDelayVal">0 ms</span></div>
+            <input type="range" id="simDelay" min="0" max="1000" step="25" value="0">
+          </div>
+          <div class="delta-grid" id="deltaGrid"></div>
+          <p class="sim-note">This models one participant's audio arriving late to their partner &mdash; the mechanism studied in video-call delay research. Shifting only one side's timing changes how their turns line up against the other's, without either person doing anything differently.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="card-head">
+        <div>
+          <p class="card-title">Turns</p>
+          <p class="card-desc">Click a column to sort</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="turnsTable">
+          <thead>
+            <tr>
+              <th data-key="index">#</th>
+              <th data-key="speaker">Speaker</th>
+              <th data-key="start">Start</th>
+              <th data-key="end">End</th>
+              <th data-key="duration">Duration</th>
+              <th data-key="gap">Gap before</th>
+              <th data-key="flag">Flag</th>
+              <th>Text</th>
+            </tr>
+          </thead>
+          <tbody id="turnsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Turn Lag &mdash; a small open-source instrument for looking at conversational timing. Runs entirely client-side.
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

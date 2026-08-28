@@ -1,0 +1,72 @@
+# Turn Lag
+
+A small browser-based instrument for looking at the timing of a conversation: who talks when, how long the gaps between turns run, where turns overlap, and — the interesting part — what happens to all of that once you simulate a bit of call latency on one speaker.
+
+Paste in a transcript, and Turn Lag gives you a timeline, a distribution of turn-transition gaps, per-speaker stats, and a delay simulator that recomputes everything as if one participant's audio were arriving late.
+
+![Turn Lag screenshot](docs/screenshot.png)
+
+**[Live demo →](#deploying)** (see below for a one-click way to host your own)
+
+## Why
+
+Conversation researchers measure the timing of turn-taking with something called the **floor-transfer offset (FTO)**: the gap between when one person's turn ends and the next person's turn starts. In face-to-face conversation this gap clusters tightly around ~200ms — famously faster than the time it takes to plan an utterance from scratch, which is part of why turn-taking timing is such a well-studied phenomenon in psycholinguistics.
+
+Video calls complicate this. Audio latency delays what each person hears, which can shift turn-transition timing in ways that get misread as social signals — a slow response reads as disengagement, a fast one reads as an interruption, even though nobody actually changed how they were listening or responding. That's the mechanism the delay simulator here is modeling: shift one speaker's timing by a fixed delay and watch the overlap rate and pause lengths move, with nobody in the conversation doing anything differently.
+
+Turn Lag isn't a research tool for publication-grade analysis — it's a quick, visual way to explore that idea on a real transcript, whether that's an actual call recording or something you're using to sanity-check the concept.
+
+## Using it
+
+Open `index.html` in any browser — there's no build step, server, or dependency to install. Everything runs client-side; nothing you paste is sent anywhere.
+
+1. Paste a transcript (or click **Load sample conversation** to try it with a synthetic example), or upload a `.vtt`/`.csv` file.
+2. Click **Analyze transcript**.
+3. Explore the timeline, the turn-transition histogram, the per-speaker breakdown, and the sortable turn table.
+4. In the **delay simulator**, pick a speaker and drag the slider to see how added latency shifts overlap rate and pause length.
+
+### Supported formats
+
+**WebVTT** — the standard export from Zoom, Otter, and most captioning tools. Speaker can be tagged with `<v Name>` or written as `Name: text` at the start of the cue:
+
+```vtt
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:02.500
+Alice: Hey, how's it going?
+
+2
+00:00:02.300 --> 00:00:04.100
+Bob: Pretty good, you?
+```
+
+**CSV** — columns `speaker, start, end, text` (text is optional). Times can be given in seconds or as `mm:ss` / `hh:mm:ss.mmm`:
+
+```csv
+speaker,start,end,text
+Alice,0:00,0:02.5,"Hey, how's it going?"
+Bob,0:02.3,0:04.1,Pretty good
+```
+
+Two example files are in [`sample-data/`](sample-data) if you want to see both formats end to end.
+
+Cues from the same speaker within a configurable window (300ms by default) get merged into a single turn before anything is computed — this keeps a transcript that logs every individual utterance from being counted as dozens of tiny turns.
+
+## How the numbers are computed
+
+- **Turn-transition timing** follows standard FTO methodology: for every turn after the first, the gap is measured against the turn immediately before it. A speaker switch produces an FTO (positive = pause, negative = overlap); a same-speaker adjacency is counted separately as a "self-continuation" pause and left out of the FTO statistics.
+- **Overlap rate** is the share of speaker-switch transitions where the next turn began before the previous one ended.
+- **The delay simulator** shifts every turn from the selected speaker forward by the chosen number of milliseconds, then recomputes turn-transition timing from scratch on that adjusted transcript — modeling their audio arriving later to their conversational partner.
+
+## Tech
+
+Vanilla HTML, CSS, and JavaScript. No frameworks, no build tooling, no dependencies — one file that any static host can serve. All parsing, timing math, and rendering (including the SVG timeline and histogram) is hand-written; see [`app.js`](app.js).
+
+## Deploying
+
+To host your own copy on GitHub Pages: push this repo, then in **Settings → Pages** set the source to the `main` branch, root folder. That's it — `index.html` is the entry point.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
