@@ -63,6 +63,12 @@ Three example files are in [`sample-data/`](sample-data) — one per format — 
 
 Cues from the same speaker within a configurable window (300ms by default) get merged into a single turn before anything is computed — this keeps a transcript that logs every individual utterance from being counted as dozens of tiny turns.
 
+### Two separate speaker tracks
+
+If you've got two separate recordings of the same call — one per person, as you'd get from two local recordings, or two separately-transcribed audio tracks — use the **Two speaker tracks** tab instead of combining them yourself. Upload one file per speaker, give each a name, and Turn Lag merges them into a single timeline and runs the same analysis on the combined result. Any speaker tags already inside those files are ignored; every cue in a track file is stamped with the name you gave that track, so a plain, untagged transcript works fine as a track file.
+
+This only works if both files' timestamps share the same zero point — i.e. both are counted from the same moment the call or recording started. If one track has, say, ten seconds of dead air at the start that the other doesn't, the timing analysis (especially overlap detection) will be off by that amount.
+
 ## How the numbers are computed
 
 - **Turn-transition timing** follows standard FTO methodology: for every turn after the first, the gap is measured against the turn immediately before it. A speaker switch produces an FTO (positive = pause, negative = overlap); a same-speaker adjacency is counted separately as a "self-continuation" pause and left out of the FTO statistics.

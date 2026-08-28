@@ -174,6 +174,7 @@
   /* ---------- Input panel ---------- */
   .input-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
   @media (max-width: 860px) { .input-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 480px) { .track-row { flex-direction: column; } .track-label { width: 100%; } }
 
   .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
   .tab-btn {
@@ -202,6 +203,14 @@
   }
   .file-drop:hover { border-color: var(--accent); color: var(--ink-2); }
   .file-drop input { display: none; }
+
+  .track-intro { font-size: 13px; color: var(--ink-2); margin: 0 0 4px; line-height: 1.6; }
+  .track-row { display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px; }
+  .track-label {
+    flex: none; width: 128px; font-family: "IBM Plex Sans", sans-serif; font-weight: 500; font-size: 13px;
+  }
+  .track-file { flex: 1 1 auto; padding: 10px 14px; text-align: left; display: flex; flex-direction: column; gap: 2px; justify-content: center; }
+  .track-file-status { font-size: 12px; color: var(--ink-muted); }
   .field-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .field-row label { font-size: 12.5px; color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
 
@@ -326,6 +335,7 @@
         <div class="tabs" role="tablist">
           <button class="tab-btn" role="tab" aria-selected="true" data-tab="paste">Paste transcript</button>
           <button class="tab-btn" role="tab" aria-selected="false" data-tab="upload">Upload file</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-tab="tracks">Two speaker tracks</button>
         </div>
 
         <div class="tab-panel active" data-panel="paste">
@@ -342,6 +352,31 @@
             <input type="file" id="fileInput" accept=".vtt,.srt,.csv,.txt">
           </label>
           <div class="field-row" id="fileStatus" style="color: var(--ink-muted); font-size: 13px;"></div>
+        </div>
+
+        <div class="tab-panel" data-panel="tracks">
+          <p class="track-intro">Two separate recordings of the same call, one per person &mdash; each file should contain only that speaker's turns. Any speaker tags already inside the file are ignored and replaced with the name you give it below. Timestamps in both files need to share the same starting point (both counted from when the call began).</p>
+
+          <div class="track-row">
+            <input type="text" class="track-label" id="trackALabel" value="Speaker A" maxlength="40" aria-label="Track A speaker name">
+            <label class="file-drop track-file" for="trackAFile">
+              <div><strong>Track A file</strong> &mdash; .vtt, .srt, or .csv</div>
+              <div class="track-file-status" id="trackAStatus">No file chosen</div>
+              <input type="file" id="trackAFile" accept=".vtt,.srt,.csv,.txt">
+            </label>
+          </div>
+          <div class="track-row">
+            <input type="text" class="track-label" id="trackBLabel" value="Speaker B" maxlength="40" aria-label="Track B speaker name">
+            <label class="file-drop track-file" for="trackBFile">
+              <div><strong>Track B file</strong> &mdash; .vtt, .srt, or .csv</div>
+              <div class="track-file-status" id="trackBStatus">No file chosen</div>
+              <input type="file" id="trackBFile" accept=".vtt,.srt,.csv,.txt">
+            </label>
+          </div>
+
+          <div class="field-row">
+            <button class="btn btn-primary" id="analyzeTracksBtn">Combine &amp; analyze</button>
+          </div>
         </div>
 
         <div class="field-row" style="margin-top: 14px;">
@@ -366,7 +401,7 @@
         </div>
         <div>
           <h3>CSV format</h3>
-          <p>Columns <code>speaker, start, end, text</code> (text optional). Times can be seconds or <code>mm:ss</code> / <code>hh:mm:ss.mmm</code>.</p>
+          <p>Columns <code>speaker, start, end, text</code> (speaker and text both optional &mdash; a speaker column isn't needed for a single-speaker track file). Times can be seconds or <code>mm:ss</code> / <code>hh:mm:ss.mmm</code>.</p>
           <pre class="mono">speaker,start,end,text
 Alice,0:00,0:02.5,"Hey, how's it going?"
 Bob,0:02.3,0:04.1,Pretty good</pre>

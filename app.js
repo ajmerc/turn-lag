@@ -115,14 +115,14 @@
       end: header.indexOf('end'),
       text: header.indexOf('text'),
     };
-    if (idx.speaker === -1 || idx.start === -1 || idx.end === -1) {
-      throw new Error('CSV must have speaker, start, and end columns (text column optional).');
+    if (idx.start === -1 || idx.end === -1) {
+      throw new Error('CSV must have start and end columns (speaker and text are both optional).');
     }
     const entries = [];
     for (let i = 1; i < lines.length; i++) {
       const cols = parseCSVLine(lines[i]);
       if (cols.length < 2) continue;
-      const speaker = (cols[idx.speaker] || 'Unknown').trim();
+      const speaker = idx.speaker !== -1 ? (cols[idx.speaker] || 'Unknown').trim() : 'Unknown';
       const start = parseTimeToMs(cols[idx.start]);
       const end = parseTimeToMs(cols[idx.end]);
       const text = idx.text !== -1 ? (cols[idx.text] || '').trim() : '';
@@ -409,6 +409,21 @@ Sam: Sounds good, talk then.
     box.classList.add('show');
   }
 
+  // Auto-detects and parses a transcript in whichever format it looks like
+  // (WebVTT/SRT cues, or CSV rows). Throws with a user-facing message on
+  // failure rather than returning an empty result silently.
+  function parseEntriesFromText(text, forceCSV) {
+    const looksLikeSubtitles = /-->/.test(text) || /^\s*WEBVTT/i.test(text);
+    let entries = [];
+    if (forceCSV) entries = parseCSV(text);
+    else if (looksLikeSubtitles) entries = parseSubtitleCues(text);
+    else entries = parseCSV(text);
+
+    if (!entries.length && !looksLikeSubtitles && !forceCSV) entries = parseSubtitleCues(text); // last-ditch fallback
+    if (!entries.length) throw new Error('Could not find any valid cues/rows. Check the format against the guide below.');
+    return entries;
+  }
+
   function analyze() {
     showError(null);
     const activeTab = $('.tab-btn[aria-selected="true"]').dataset.tab;
@@ -422,20 +437,78 @@ Sam: Sounds good, talk then.
     }
     if (!text || !text.trim()) { showError('Paste a transcript or load the sample conversation.'); return; }
 
-    let entries = [];
+    let entries;
     try {
-      const looksLikeSubtitles = /-->/.test(text) || /^\s*WEBVTT/i.test(text);
-      if (forceCSV) entries = parseCSV(text);
-      else if (looksLikeSubtitles) entries = parseSubtitleCues(text);
-      else entries = parseCSV(text);
-
-      if (!entries.length && !looksLikeSubtitles && !forceCSV) entries = parseSubtitleCues(text); // last-ditch fallback
-      if (!entries.length) throw new Error('Could not find any valid cues/rows. Check the format against the guide below.');
+      entries = parseEntriesFromText(text, forceCSV);
     } catch (err) {
       showError(err.message || String(err));
       return;
     }
 
+    finishAnalyze(entries);
+  }
+
+  // ---------- Two speaker tracks ----------
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error(`Could not read "${file.name}".`));
+      reader.readAsText(file);
+    });
+  }
+
+  // Parses one speaker's own file and stamps every cue with that speaker's
+  // label, overriding whatever (if anything) the file itself says — a
+  // single-speaker track file doesn't need, and shouldn't need, its own
+  // speaker tags.
+  function parseTrackFile(text, filename, label) {
+    if (!text || !text.trim()) throw new Error(`${label}'s file is empty.`);
+    const forceCSV = /\.csv$/i.test(filename);
+    let entries;
+    try {
+      entries = parseEntriesFromText(text, forceCSV);
+    } catch (err) {
+      throw new Error(`${label}: ${err.message || err}`);
+    }
+    return entries.map((e) => ({ ...e, speaker: label }));
+  }
+
+  $('#trackAFile').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    $('#trackAStatus').textContent = f ? `${f.name} (${(f.size / 1024).toFixed(1)} KB)` : 'No file chosen';
+  });
+  $('#trackBFile').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    $('#trackBStatus').textContent = f ? `${f.name} (${(f.size / 1024).toFixed(1)} KB)` : 'No file chosen';
+  });
+
+  $('#analyzeTracksBtn').addEventListener('click', async () => {
+    showError(null);
+    const fileA = $('#trackAFile').files[0];
+    const fileB = $('#trackBFile').files[0];
+    if (!fileA || !fileB) { showError('Choose a file for both Track A and Track B.'); return; }
+
+    const labelA = ($('#trackALabel').value || '').trim() || 'Speaker A';
+    const labelB = ($('#trackBLabel').value || '').trim() || 'Speaker B';
+    if (labelA === labelB) { showError('Give the two tracks different speaker names.'); return; }
+
+    let entries;
+    try {
+      const [textA, textB] = await Promise.all([readFileAsText(fileA), readFileAsText(fileB)]);
+      const entriesA = parseTrackFile(textA, fileA.name, labelA);
+      const entriesB = parseTrackFile(textB, fileB.name, labelB);
+      entries = [...entriesA, ...entriesB];
+    } catch (err) {
+      showError(err.message || String(err));
+      return;
+    }
+
+    finishAnalyze(entries);
+  });
+
+  // ---------- Shared tail: merge cues into turns, compute metrics, render ----------
+  function finishAnalyze(entries) {
     const mergeGapMs = Math.max(0, parseInt($('#mergeGap').value, 10) || 0);
     const turns = mergeTurns(entries, mergeGapMs);
     if (turns.length < 2) { showError('Found fewer than two turns — need at least two to analyze timing.'); return; }
