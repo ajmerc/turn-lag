@@ -20,14 +20,14 @@ Turn Lag isn't a research tool for publication-grade analysis — it's a quick, 
 
 Open `index.html` in any browser — there's no build step, server, or dependency to install. Everything runs client-side; nothing you paste is sent anywhere.
 
-1. Paste a transcript (or click **Load sample conversation** to try it with a synthetic example), or upload a `.vtt`/`.csv` file.
+1. Paste a transcript (or click **Load sample conversation** to try it with a synthetic example), or upload a `.vtt`/`.srt`/`.csv` file.
 2. Click **Analyze transcript**.
 3. Explore the timeline, the turn-transition histogram, the per-speaker breakdown, and the sortable turn table.
 4. In the **delay simulator**, pick a speaker and drag the slider to see how added latency shifts overlap rate and pause length.
 
 ### Supported formats
 
-**WebVTT** — the standard export from Zoom, Otter, and most captioning tools. Speaker can be tagged with `<v Name>` or written as `Name: text` at the start of the cue:
+**WebVTT** and **SRT** — the standard export from Zoom, Otter, most captioning tools, and most speaker-diarization pipelines (e.g. `pyannote` / Whisper-based tools tend to emit SRT with a `[SPEAKER_00]:`-style tag). The two formats are parsed the same way; the only real differences are the header line and the timestamp's decimal mark (`.` for VTT, `,` for SRT), both handled automatically. Speaker can be tagged as `<v Name>`, `[Name]:`, or plain `Name:` at the start of the cue:
 
 ```vtt
 WEBVTT
@@ -41,6 +41,16 @@ Alice: Hey, how's it going?
 Bob: Pretty good, you?
 ```
 
+```srt
+1
+00:00:03,254 --> 00:00:04,175
+[SPEAKER_01]: What's your favorite movie?
+
+2
+00:00:06,299 --> 00:00:11,667
+[SPEAKER_00]: I have a pretty bad memory.
+```
+
 **CSV** — columns `speaker, start, end, text` (text is optional). Times can be given in seconds or as `mm:ss` / `hh:mm:ss.mmm`:
 
 ```csv
@@ -49,7 +59,7 @@ Alice,0:00,0:02.5,"Hey, how's it going?"
 Bob,0:02.3,0:04.1,Pretty good
 ```
 
-Two example files are in [`sample-data/`](sample-data) if you want to see both formats end to end.
+Three example files are in [`sample-data/`](sample-data) — one per format — if you want to see them end to end.
 
 Cues from the same speaker within a configurable window (300ms by default) get merged into a single turn before anything is computed — this keeps a transcript that logs every individual utterance from being counted as dozens of tiny turns.
 

@@ -7,7 +7,7 @@
   // ============================================================
 
   function parseTimeToMs(str) {
-    str = String(str).trim();
+    str = String(str).trim().replace(',', '.'); // SRT uses a comma decimal separator
     if (/^-?\d+(\.\d+)?$/.test(str)) return parseFloat(str) * 1000;
     const parts = str.split(':');
     let sec = 0;
@@ -33,7 +33,11 @@
     return `${sign}${Math.round(Math.abs(ms))} ms`;
   }
 
-  function parseVTT(text) {
+  // Parses both WebVTT (.vtt) and SubRip (.srt) cue blocks — the two formats
+  // share the same "block of lines, blank line, block of lines" shape and
+  // only really differ in the header line and the timestamp's decimal mark
+  // (. for VTT, , for SRT), both handled below.
+  function parseSubtitleCues(text) {
     const lines = text.replace(/\r\n/g, '\n').split('\n');
     const blocks = [];
     let cur = [];
@@ -62,15 +66,17 @@
       let speaker = null;
       let text = raw;
       const vMatch = raw.match(/^<v\s+([^>]+)>\s*(.*)$/i);
+      const bracketMatch = raw.match(/^\[([^\]]{1,40})\]:?\s*(.*)$/);
+      const colonMatch = raw.match(/^([A-Za-z0-9 ._'()-]{1,40}):\s*(.*)$/);
       if (vMatch) {
         speaker = vMatch[1].trim();
         text = vMatch[2].replace(/<\/v>/gi, '').trim();
-      } else {
-        const colonMatch = raw.match(/^([A-Za-z0-9 ._'()-]{1,40}):\s*(.*)$/);
-        if (colonMatch) {
-          speaker = colonMatch[1].trim();
-          text = colonMatch[2].trim();
-        }
+      } else if (bracketMatch) {
+        speaker = bracketMatch[1].trim();
+        text = bracketMatch[2].trim();
+      } else if (colonMatch) {
+        speaker = colonMatch[1].trim();
+        text = colonMatch[2].trim();
       }
       text = text.replace(/<[^>]*>/g, '').trim();
       if (!speaker) speaker = 'Unknown';
@@ -418,12 +424,12 @@ Sam: Sounds good, talk then.
 
     let entries = [];
     try {
-      const looksVTT = /-->/.test(text) || /^\s*WEBVTT/i.test(text);
+      const looksLikeSubtitles = /-->/.test(text) || /^\s*WEBVTT/i.test(text);
       if (forceCSV) entries = parseCSV(text);
-      else if (looksVTT) entries = parseVTT(text);
+      else if (looksLikeSubtitles) entries = parseSubtitleCues(text);
       else entries = parseCSV(text);
 
-      if (!entries.length && !looksVTT && !forceCSV) entries = parseVTT(text); // last-ditch fallback
+      if (!entries.length && !looksLikeSubtitles && !forceCSV) entries = parseSubtitleCues(text); // last-ditch fallback
       if (!entries.length) throw new Error('Could not find any valid cues/rows. Check the format against the guide below.');
     } catch (err) {
       showError(err.message || String(err));

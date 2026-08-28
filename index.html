@@ -329,7 +329,7 @@
         </div>
 
         <div class="tab-panel active" data-panel="paste">
-          <textarea id="pasteArea" placeholder="Paste a WebVTT transcript (e.g. exported from Zoom) or CSV with speaker,start,end,text columns&#10;&#10;WEBVTT&#10;&#10;1&#10;00:00:00.000 --> 00:00:02.500&#10;Alice: Hey, how's it going?"></textarea>
+          <textarea id="pasteArea" placeholder="Paste a WebVTT or SRT transcript (e.g. exported from Zoom, Otter, or a diarization tool) or CSV with speaker,start,end,text columns&#10;&#10;WEBVTT&#10;&#10;1&#10;00:00:00.000 --> 00:00:02.500&#10;Alice: Hey, how's it going?"></textarea>
           <div class="field-row">
             <button class="btn btn-primary" id="analyzeBtn">Analyze transcript</button>
             <button class="btn btn-ghost" id="loadSampleBtn">Load sample conversation</button>
@@ -338,8 +338,8 @@
 
         <div class="tab-panel" data-panel="upload">
           <label class="file-drop" for="fileInput">
-            <div><strong>Click to choose a file</strong> &mdash; .vtt or .csv</div>
-            <input type="file" id="fileInput" accept=".vtt,.csv,.txt">
+            <div><strong>Click to choose a file</strong> &mdash; .vtt, .srt, or .csv</div>
+            <input type="file" id="fileInput" accept=".vtt,.srt,.csv,.txt">
           </label>
           <div class="field-row" id="fileStatus" style="color: var(--ink-muted); font-size: 13px;"></div>
         </div>
@@ -354,17 +354,15 @@
 
       <div class="guide">
         <div>
-          <h3>WebVTT format</h3>
-          <p>Standard export from Zoom, Otter, or most caption tools. Speaker can be tagged as <code>&lt;v Name&gt;</code> or written as <code>Name: text</code> at the start of the cue.</p>
-          <pre class="mono">WEBVTT
-
-1
-00:00:00.000 --&gt; 00:00:02.500
-Alice: Hey, how's it going?
+          <h3>WebVTT &amp; SRT format</h3>
+          <p>Standard export from Zoom, Otter, or most caption and diarization tools. Speaker can be tagged as <code>&lt;v Name&gt;</code>, <code>[Name]:</code>, or plain <code>Name:</code> at the start of the cue.</p>
+          <pre class="mono">1
+00:00:03,254 --&gt; 00:00:04,175
+[SPEAKER_01]: What's your favorite movie?
 
 2
-00:00:02.300 --&gt; 00:00:04.100
-Bob: Pretty good, you?</pre>
+00:00:06,299 --&gt; 00:00:11,667
+[SPEAKER_00]: I have a pretty bad memory.</pre>
         </div>
         <div>
           <h3>CSV format</h3>
