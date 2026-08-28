@@ -157,7 +157,6 @@
     max-width: 62ch;
     margin: 0;
   }
-  .subtitle .footnote { color: var(--ink-muted); font-size: 14px; display: block; margin-top: 6px; }
 
   /* ---------- Cards ---------- */
   .card {
@@ -295,7 +294,6 @@
   .delta-val { font-family: "IBM Plex Mono", monospace; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .delta-val.up { color: var(--critical); }
   .delta-val.down { color: var(--good); }
-  .sim-note { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
 
   footer { text-align: center; color: var(--ink-muted); font-size: 12.5px; padding-top: 12px; }
   footer a { color: var(--ink-2); }
@@ -319,6 +317,7 @@
   svg text { font-family: "IBM Plex Mono", monospace; fill: var(--ink-muted); }
   .axis-line { stroke: var(--baseline); stroke-width: 1; }
   .grid-line { stroke: var(--gridline); stroke-width: 1; }
+  .grid-line.minor { stroke: var(--baseline); opacity: 0.6; }
 </style>
 </head>
 <body>
@@ -330,8 +329,7 @@
     <div class="eyebrow">turn-taking instrument</div>
     <h1>Turn Lag</h1>
     <p class="subtitle">
-      Paste a conversation transcript and see the rhythm underneath it: who talks when, how long the gaps between turns run, and where turns overlap. Then simulate call delay on one speaker and watch the same conversation's timing statistics shift.
-      <span class="footnote">Built on floor-transfer-offset (FTO) methodology from conversation-timing research &mdash; the same measure used to study how audio/video-call latency distorts turn-taking. Runs entirely in your browser; nothing you paste is uploaded anywhere.</span>
+      Paste a transcript to see who talks when, how long the gaps between turns run, and where turns overlap &mdash; then simulate call delay on one speaker and watch the timing shift.
     </p>
   </header>
 
@@ -443,7 +441,7 @@ Bob,0:02.3,0:04.1,Pretty good</pre>
       <div class="card-head">
         <div>
           <p class="card-title">Timeline</p>
-          <p class="card-desc">Each bar is one turn. Overlapping bars across lanes are simultaneous speech; dashed connectors mark the gap before a turn starts.</p>
+          <p class="card-desc">Each bar is one turn &mdash; hover a bar for its text. Overlapping bars are simultaneous speech; dashed connectors mark the gap before a turn.</p>
         </div>
       </div>
       <div id="timelineWrap"></div>
@@ -482,7 +480,6 @@ Bob,0:02.3,0:04.1,Pretty good</pre>
             <input type="range" id="simDelay" min="0" max="1000" step="25" value="0">
           </div>
           <div class="delta-grid" id="deltaGrid"></div>
-          <p class="sim-note">This models one participant's audio arriving late to their partner &mdash; the mechanism studied in video-call delay research. Shifting only one side's timing changes how their turns line up against the other's, without either person doing anything differently.</p>
         </div>
       </div>
     </div>
@@ -515,7 +512,7 @@ Bob,0:02.3,0:04.1,Pretty good</pre>
   </section>
 
   <footer>
-    Turn Lag &mdash; a small open-source instrument for looking at conversational timing. Runs entirely client-side.
+    Turn Lag &mdash; runs entirely client-side, nothing is uploaded.
   </footer>
 </div>
 

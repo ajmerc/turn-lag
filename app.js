@@ -258,99 +258,99 @@
 
 1
 00:00:00.200 --> 00:00:03.800
-Priya: Okay so I finally got through the pilot data from last week's calls.
+Nadia: Okay so I finally got through pricing out flights for the Portugal trip.
 
 2
 00:00:04.000 --> 00:00:06.200
-Sam: Oh nice, how's it looking?
+Theo: Oh nice, how's it looking?
 
 3
 00:00:06.900 --> 00:00:11.400
-Priya: Better than I expected honestly, but there's this one weird pattern in the Zoom condition.
+Nadia: Better than I expected honestly, but there's this weird spike if we fly through Madrid.
 
 4
 00:00:11.600 --> 00:00:15.900
-Sam: The delay condition specifically, or across the board?
+Theo: The layover route specifically, or the direct flights too?
 
 5
 00:00:16.700 --> 00:00:17.100
-Priya: Mm.
+Nadia: Mm.
 
 6
 00:00:16.850 --> 00:00:20.200
-Sam: Because if it's across the board that changes how we write it up.
+Theo: Because if it's the direct flights too that changes our whole plan.
 
 7
 00:00:21.900 --> 00:00:26.500
-Priya: No no, just delay. People's turn gaps basically double once we add the two hundred milliseconds.
+Nadia: No no, just the layover. Prices basically double once we add a connection in September.
 
 8
 00:00:27.300 --> 00:00:29.000
-Sam: Right, that tracks with Torreira.
+Theo: Right, that tracks with what Owen was saying.
 
 9
 00:00:29.750 --> 00:00:34.600
-Priya: Yeah exactly, and the overlap rate drops too, which is the part I didn't expect.
+Nadia: Yeah exactly, and the hotel rates drop too, which is the part I didn't expect.
 
 10
 00:00:35.400 --> 00:00:37.100
-Sam: Wait, it drops?
+Theo: Wait, they drop?
 
 11
 00:00:37.200 --> 00:00:41.900
-Sam: I would've guessed more overlap, not less, if people can't hear the turn-final cues in time.
+Theo: I would've guessed higher, not lower, if everyone's flying direct that week.
 
 12
 00:00:42.600 --> 00:00:47.800
-Priya: That's what I thought too. My best guess is people are being more cautious, so they're waiting longer to jump in.
+Nadia: That's what I thought too. My best guess is fewer people book that late, so hosts drop prices to fill rooms.
 
 13
 00:00:48.500 --> 00:00:49.900
-Jordan: Sorry, can I jump in here?
+Owen: Sorry, can I jump in here?
 
 14
 00:00:50.100 --> 00:00:54.700
-Jordan: Isn't that basically the audience-design story though, just applied to timing instead of word choice?
+Owen: Isn't that basically what happened with our Lisbon Airbnb last year, just with flights instead of hotels?
 
 15
 00:00:55.500 --> 00:00:56.900
-Priya: Kind of, yeah.
+Nadia: Kind of, yeah.
 
 16
 00:00:57.600 --> 00:01:02.400
-Priya: It's like people are adjusting their whole turn-taking strategy once they've picked up on the lag, not just reacting turn by turn.
+Nadia: It's like once people commit to a date, the whole market adjusts around it, not just the one thing.
 
 17
 00:01:03.900 --> 00:01:07.600
-Sam: Okay so what does that mean for how we frame the discussion section?
+Theo: Okay so what does that mean for when we should actually book?
 
 18
 00:01:11.200 --> 00:01:12.400
-Priya: Give me a second, I'm pulling up the numbers.
+Nadia: Give me a second, I'm pulling up the calendar.
 
 19
 00:01:16.800 --> 00:01:21.900
-Priya: Median FTO in the no-delay condition is one ninety, in the delay condition it's four ten.
+Nadia: Cheapest week is the second week of September, direct flights are running around four ten.
 
 20
 00:01:22.600 --> 00:01:23.400
-Sam: Huge.
+Theo: Huge.
 
 21
 00:01:23.500 --> 00:01:27.800
-Sam: That's a great headline number honestly, that alone is worth leading with.
+Theo: That's a great number honestly, that alone is worth building the trip around.
 
 22
 00:01:27.750 --> 00:01:29.200
-Jordan: Agreed, that's clean.
+Owen: Agreed, that's clean.
 
 23
 00:01:30.500 --> 00:01:35.900
-Priya: Okay, I'll draft the results section tonight and send it over before the meeting tomorrow.
+Nadia: Okay, I'll book the flights tonight and send the itinerary over before we talk tomorrow.
 
 24
 00:01:36.600 --> 00:01:38.000
-Sam: Sounds good, talk then.
+Theo: Sounds good, talk then.
 `;
 
   // ============================================================
@@ -636,12 +636,27 @@ Sam: Sounds good, talk then.
     const x = (t) => leftPad + ((t - minStart) / 1000) * pxPerSec;
     const laneY = (i) => topPad + i * laneH;
 
-    const gridStepSec = niceStep(durationSec / 9);
+    // Aim for a labeled gridline roughly every 90px of timeline (rounded to a
+    // "nice" step), rather than a fixed handful of labels stretched across
+    // however wide the (often long, scrollable) timeline turns out to be.
+    const svgWApprox = leftPad * 2 + durationSec * pxPerSec;
+    const targetTicks = Math.max(6, Math.floor(svgWApprox / 90));
+    const gridStepSec = niceStep(durationSec / targetTicks);
+    const minorStep = gridStepSec > 1 ? gridStepSec / 5 : null;
+    const lanesBottom = topPad + order.length * laneH;
     let grid = '';
     for (let s = 0; s <= durationSec + 0.001; s += gridStepSec) {
       const gx = x(minStart + s * 1000);
-      grid += `<line class="grid-line" x1="${gx}" y1="${topPad - 4}" x2="${gx}" y2="${topPad + order.length * laneH}" />`;
-      grid += `<text x="${gx}" y="${topPad + order.length * laneH + 18}" font-size="10" text-anchor="middle">${msToClock(s * 1000)}</text>`;
+      grid += `<line class="grid-line" x1="${gx}" y1="${topPad - 4}" x2="${gx}" y2="${lanesBottom}" />`;
+      grid += `<text x="${gx}" y="${lanesBottom + 18}" font-size="10" text-anchor="middle">${msToClock(s * 1000)}</text>`;
+      if (minorStep) {
+        for (let m = 1; m < 5; m++) {
+          const ms = s + m * minorStep;
+          if (ms > durationSec + 0.001) break;
+          const mx = x(minStart + ms * 1000);
+          grid += `<line class="grid-line minor" x1="${mx}" y1="${lanesBottom - 5}" x2="${mx}" y2="${lanesBottom}" />`;
+        }
+      }
     }
 
     let bars = '';
