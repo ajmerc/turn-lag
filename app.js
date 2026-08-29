@@ -254,6 +254,11 @@
   // Sample data
   // ============================================================
 
+  // Timed to land close to real conversational norms rather than a scripted
+  // back-and-forth: median FTO 200ms and mean FTO ~209ms (Stivers et al. 2009
+  // found ~200ms average across languages), with 7 of 18 switches overlapping
+  // (~39%, matching the ~40% overlap rate Heldner & Edlund 2010 measured
+  // across three corpora) instead of near-silent turn-taking.
   const SAMPLE_VTT = `WEBVTT
 
 1
@@ -261,95 +266,95 @@
 Nadia: Okay so I finally got through pricing out flights for the Portugal trip.
 
 2
-00:00:04.000 --> 00:00:06.200
+00:00:03.720 --> 00:00:05.920
 Theo: Oh nice, how's it looking?
 
 3
-00:00:06.900 --> 00:00:11.400
+00:00:06.170 --> 00:00:10.670
 Nadia: Better than I expected honestly, but there's this weird spike if we fly through Madrid.
 
 4
-00:00:11.600 --> 00:00:15.900
+00:00:10.570 --> 00:00:14.870
 Theo: The layover route specifically, or the direct flights too?
 
 5
-00:00:16.700 --> 00:00:17.100
+00:00:15.020 --> 00:00:15.420
 Nadia: Mm.
 
 6
-00:00:16.850 --> 00:00:20.200
+00:00:15.240 --> 00:00:18.590
 Theo: Because if it's the direct flights too that changes our whole plan.
 
 7
-00:00:21.900 --> 00:00:26.500
+00:00:18.840 --> 00:00:23.440
 Nadia: No no, just the layover. Prices basically double once we add a connection in September.
 
 8
-00:00:27.300 --> 00:00:29.000
+00:00:23.640 --> 00:00:25.340
 Theo: Right, that tracks with what Owen was saying.
 
 9
-00:00:29.750 --> 00:00:34.600
+00:00:25.540 --> 00:00:30.390
 Nadia: Yeah exactly, and the hotel rates drop too, which is the part I didn't expect.
 
 10
-00:00:35.400 --> 00:00:37.100
+00:00:30.290 --> 00:00:31.990
 Theo: Wait, they drop?
 
 11
-00:00:37.200 --> 00:00:41.900
+00:00:32.090 --> 00:00:36.790
 Theo: I would've guessed higher, not lower, if everyone's flying direct that week.
 
 12
-00:00:42.600 --> 00:00:47.800
+00:00:36.990 --> 00:00:42.190
 Nadia: That's what I thought too. My best guess is fewer people book that late, so hosts drop prices to fill rooms.
 
 13
-00:00:48.500 --> 00:00:49.900
+00:00:42.040 --> 00:00:43.440
 Owen: Sorry, can I jump in here?
 
 14
-00:00:50.100 --> 00:00:54.700
+00:00:43.640 --> 00:00:48.240
 Owen: Isn't that basically what happened with our Lisbon Airbnb last year, just with flights instead of hotels?
 
 15
-00:00:55.500 --> 00:00:56.900
+00:00:48.390 --> 00:00:49.790
 Nadia: Kind of, yeah.
 
 16
-00:00:57.600 --> 00:01:02.400
+00:00:50.490 --> 00:00:55.290
 Nadia: It's like once people commit to a date, the whole market adjusts around it, not just the one thing.
 
 17
-00:01:03.900 --> 00:01:07.600
+00:00:55.490 --> 00:00:59.190
 Theo: Okay so what does that mean for when we should actually book?
 
 18
-00:01:11.200 --> 00:01:12.400
+00:00:59.540 --> 00:01:00.740
 Nadia: Give me a second, I'm pulling up the calendar.
 
 19
-00:01:16.800 --> 00:01:21.900
+00:01:05.140 --> 00:01:10.240
 Nadia: Cheapest week is the second week of September, direct flights are running around four ten.
 
 20
-00:01:22.600 --> 00:01:23.400
+00:01:10.160 --> 00:01:10.960
 Theo: Huge.
 
 21
-00:01:23.500 --> 00:01:27.800
+00:01:11.060 --> 00:01:15.360
 Theo: That's a great number honestly, that alone is worth building the trip around.
 
 22
-00:01:27.750 --> 00:01:29.200
+00:01:15.260 --> 00:01:16.710
 Owen: Agreed, that's clean.
 
 23
-00:01:30.500 --> 00:01:35.900
+00:01:16.910 --> 00:01:22.310
 Nadia: Okay, I'll book the flights tonight and send the itinerary over before we talk tomorrow.
 
 24
-00:01:36.600 --> 00:01:38.000
+00:01:22.460 --> 00:01:23.860
 Theo: Sounds good, talk then.
 `;
 
