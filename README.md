@@ -18,7 +18,7 @@ Turn Lag isn't a research tool for publication-grade analysis — it's a quick, 
 
 ## Using it
 
-Open `index.html` in any browser — there's no build step, server, or dependency to install. Everything runs client-side; nothing you paste is sent anywhere.
+Open `index.html` in any browser. Everything runs client-side; nothing you paste is sent anywhere.
 
 1. Paste a transcript (or click **Load sample conversation** to try it with a synthetic example), or upload a `.vtt`/`.srt`/`.csv` file.
 2. Click **Analyze transcript**.
@@ -76,10 +76,6 @@ This only works if both files' timestamps share the same zero point — i.e. bot
 - **Turn-transition timing** follows standard FTO methodology: for every turn after the first, the gap is measured against the turn immediately before it. A speaker switch produces an FTO (positive = pause, negative = overlap); a same-speaker adjacency is counted separately as a "self-continuation" pause and left out of the FTO statistics.
 - **Overlap rate** is the share of speaker-switch transitions where the next turn began before the previous one ended.
 - **The delay simulator** shifts every turn from the selected speaker forward by the chosen number of milliseconds, then recomputes turn-transition timing from scratch on that adjusted transcript — modeling their audio arriving later to their conversational partner.
-
-## Tech
-
-Vanilla HTML, CSS, and JavaScript. No frameworks, no build tooling, no dependencies — one file that any static host can serve. All parsing, timing math, and rendering (including the SVG timeline and histogram) is hand-written; see [`app.js`](app.js).
 
 ## Deploying
 
